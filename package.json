@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "object-assign": "^2.0.0",
-    "react": "^0.13.3"
+    "react": "^0.13.3",
+    "rx": "^2.5.2"
   }
 }
