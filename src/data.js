@@ -3,30 +3,19 @@ import Intents from './intents';
 
 var data = {};
 
-Intents.toggleStart.onNext(true);
 /* Define time streams */
-// let stream_tick = Rx.Observable.interval(100 /* ms */)
-// .pausable(Intents.toggleStart);
-//Hmmm...I could just make a new operator that keeps it constant
-// Rename stream_toggledTick
-let stream_tick = Rx.Observable.combineLatest(
-    Rx.Observable.interval(100 /* ms */),
-    Intents.toggleStart,
-    (tick, start) => start)
-  .scan(0, (acc, start) => {
-    // console.log(acc);
-    if (start) {
-      return acc + 1;
-    } else {
-      return acc;
-    }});
+// The scan allows us to pick up where we left off (pausing resets the time
+// back to zero without scan)
+let stream_toggledTicks = Rx.Observable.interval(100 /* ms */)
+  .pausable(Intents.toggleStart)
+  .scan(0, (acc, timeElapsed) => { return acc + 1 });
 
-let stream_deciSeconds = stream_tick
+let stream_deciSeconds = stream_toggledTicks
   // reset when we hit a second
   .map((x) => (x % 10))
   .startWith(0);
 
-let stream_seconds = stream_tick
+let stream_seconds = stream_toggledTicks
   // emit only every second
   .filter((x) => (x % 10 === 0))
   // convert to seconds
@@ -35,7 +24,7 @@ let stream_seconds = stream_tick
   .map((x) => (x % 60))
   .startWith(0);
 
-let stream_minutes = stream_tick
+let stream_minutes = stream_toggledTicks
   // emit only every minute
   .filter((x) => (x % 600 === 0))
   // convert to minutes
@@ -44,7 +33,7 @@ let stream_minutes = stream_tick
   .map((x) => (x % 60))
   .startWith(0);
 
-let stream_hours = stream_tick
+let stream_hours = stream_toggledTicks
   // emit only every hour
   .filter((x) => (x % 36000 === 0))
   // convert to hours
@@ -85,7 +74,7 @@ let stream_shouldCheckOnUser = stream_randomIntervals
     else 
       return false;
   });
-
+// Take screenshots at random intervals
 stream_shouldCheckOnUser.subscribe(
     (x) => {
       if (x) {
